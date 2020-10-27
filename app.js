@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoClient = require('mongodb').MongoClient;
+const dbopr = require('./operations');
 const url = 'mongodb://localhost:27017/';
 const dbname = 'conFusion';
 
@@ -34,27 +35,27 @@ app.use('/leaders',leaderRouter)
 
 mongoClient.connect(url, (err, client) => {
   if(err == null)
-    console.log("connected");
+    console.log("Connected to the database server!");
+
   const db = client.db(dbname);
 
-  const collection = db.collection('dishes');
+  dbopr.insertDocument(db, { name: "Uthapizza", description: "Test"}, 'dishes', (result) => {
+    console.log("Inserted document:\n ", result.ops);
 
-  collection.insertOne({ "name": "Uthapizza", "description": "Test"}, (err, result) => {
-    if(err == null)
-      console.log("inserted");
-    console.log(result.ops);
+    dbopr.findDocuments(db, 'dishes', (docs) => {
+      console.log("Found Documents:\n", docs);
 
-    collection.find({}).toArray((err, docs) => {
-      if(err == null)
-        console.log("Found:\n");
+      dbopr.updateDocument(db, {name: "Uthapizza"}, {description: "updated test"}, 'dishes', (result) => {
+        console.log("Updated Document:\n ", result.result);
 
-      console.log(docs);
+        dbopr.findDocuments(db, 'dishes', (docs) => {
+          console.log("Found Documents:\n", docs);
 
-      db.dropCollection('dishes', (err, result) => {
-        if(err == null)
-          console.log("Collection deleted");
-        
-        client.close();
+          db.dropCollection('dishes', (result) => {
+            console.log("Dropped the collection:\n", result);
+            client.close();
+          });
+        });
       });
     });
   });
