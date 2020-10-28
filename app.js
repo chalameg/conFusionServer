@@ -3,16 +3,22 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const mongoose = require('mongoose');
-
-const Dishes = require('./models/dishes');
-const url = "mongodb://localhost:27017/conFusion";
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 const dishRouter = require("./routes/dishRouter");
 const promoRouter = require("./routes/promoRouter");
 const leaderRouter = require("./routes/leaderRouter");
+
+const mongoose = require('mongoose');
+const Dishes = require('./models/dishes');
+
+const url = "mongodb://localhost:27017/conFusion";
+const connect = mongoose.connect(url);
+
+connect.then((db) => {
+  console.log("Connected to the database server!");
+}, (err) => { console.log(err); })
 
 var app = express();
 
@@ -32,46 +38,6 @@ app.use("/users", usersRouter);
 app.use("/dishes", dishRouter);
 app.use("/promotions", promoRouter);
 app.use("/leaders", leaderRouter);
-
-const connect = mongoose.connect(url);
-
-connect.then((db) => {
-  console.log("Connected to the database server!");
-
-  Dishes.create({
-      name: "Uthapizza", 
-      description: "Test"
-    })
-    .then((dish) => {
-      console.log(dish);
-
-      return Dishes.findByIdAndUpdate(dish._id, {
-        $set: {description: "updated test"} 
-      },{
-          new: true
-      }).exec();
-    })
-    .then((dish) =>{
-      console.log(dish);
-
-      dish.comments.push({
-        rating: 5,
-        comment: "I\'m getting a sinking felling",
-        author: "chala megersa"
-      });
-
-      return dish.save();
-    })
-    .then((dish) => {
-      console.log(dish)
-
-      return Dishes.remove({});
-    })
-    .then(() =>{
-      return mongoose.connection.close();
-    })
-    .catch((err)=> console.log(err));
-});
 
 
 // catch 404 and forward to error handler
